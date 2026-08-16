@@ -1,0 +1,9 @@
+# in your branch feature/verified-glimmer-agent
+chmod +x scripts/forge-verify-root
+
+# Add to Makefile or install script:
+install -m 0755 scripts/forge-verify-root /usr/bin/forge-verify-root
+
+# Add pubkey
+mkdir -p etc/forge-os/keys
+gpg --export --armor forge@ramaedge > etc/forge-os/keys/forge-pubkey.asc
