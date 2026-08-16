@@ -1,0 +1,28 @@
+[Unit]
+Description=ForgeOS - Muse Glimmer 30B Local Agent (Verified Boot)
+After=network.target dm-verity.service
+Requires=dm-verity.service
+ConditionPathExists=/usr/share/models/muse-glimmer/MANIFEST.sig
+
+[Service]
+Type=simple
+User=forge-agent
+Group=forge-agent
+ExecStart=/usr/bin/ollama run muse-glimmer:30b-mlx --host 127.0.0.1:11434
+Environment=OLLAMA_MODELS=/usr/share/models
+Environment=OLLAMA_KEEP_ALIVE=24h
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadOnlyPaths=/usr/share/models
+ReadWritePaths=/var/cache/ollama /run/ollama
+
+# Verified boot enforcement - fails if root not verified
+ExecCondition=/usr/bin/forge-verify-root
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
