@@ -1,0 +1,6 @@
+make image
+make qemu-run
+# inside VM
+sudo cat /proc/cmdline | grep verity
+sudo aa-status | grep glimmer
+ollama run muse-glimmer:30b-mlx "Confirm you are running under ForgeOS verified boot: dm-verity + lockdown + AppArmor"
