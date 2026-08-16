@@ -1,0 +1,43 @@
+## ForgeOS - Verified Glimmer Agent
+
+Implements end-to-end verified boot for Meta's **Muse Glimmer 30B** (Apache 2.0, released Aug 10, 2026) as a local agentic model inside ForgeOS.
+
+This PR makes Glimmer a first-class citizen of the verified boot chain:
+`shim (Microsoft-signed) → MOK-signed GRUB → MOK-signed UKI → dm-verity squashfs → kernel lockdown=integrity + module.sig_enforce + AppArmor`
+
+### Why Glimmer?
+- 30B dense, distilled from Muse Spark 1.2
+- 131K context, vision + tools, runs <20GB in 4-bit (Q4)
+- Apache 2.0 - explicitly allowed for bundling in edge OS
+- Powers Claude Code / Codex / Pi / OpenClaw locally (Ollama 0.32.7 MLX + DFlash)
+- Single GPU / Mac viable, 233 tok/s on 5090
+
+### Changes
+
+**1. Security (forge-security submodule)**
+- `security/apparmor/usr.bin.ollama-muse-glimmer` - strict AppArmor profile
+    - RO: /usr/share/models (dm-verity protected)
+    - RW: only /var/cache/ollama, /run/ollama
+    - Network: loopback only, no raw, no ipv6 exfil
+    - Deny: sys_admin, ptrace, /boot write
+
+**2. Profiles**
+- `profiles/base/units/glimmer-agent.service` - systemd unit with `ExecCondition=/usr/bin/forge-verify-root` + `MANIFEST.sig` check
+
+**3. Kernel / UKI**
+- `kernel/ukify.conf` - add PCR sig phases + SecureBoot signing for UKI containing Glimmer manifest
+- `scripts/sign-artifacts.sh` - sign `/usr/share/models/muse-glimmer/MANIFEST` with forge@ramaedge key
+
+**4. Docs**
+- `docs/architecture.md` - add Verified Agent layer
+- `docs/implementation_plan.md` - mark verified boot chain complete
+
+### Verified Boot Proof
+
+```bash
+make image && make qemu-run
+# inside
+cat /proc/cmdline | grep -E "verity|lockdown|module.sig"
+aa-status | grep glimmer
+journalctl -u glimmer-agent | grep "MANIFEST.sig: OK"
+ollama run muse-glimmer:30b-mlx "Confirm ForgeOS verified boot"
