@@ -1,0 +1,25 @@
+policy_module(forgeos, 1.0.0)
+
+require {
+    type kernel_t;
+    type init_t;
+    type unconfined_t;
+}
+
+# ForgeOS 12.2 VALIDATED - Verified Boot for AI Memory
+type forgeos_t;
+type forgeos_exec_t;
+domain_type(forgeos_t)
+domain_entry_file(forgeos_t, forgeos_exec_t)
+
+# Allow Glimmer to run as forgeos_t with verified boot
+allow forgeos_t self:process { execmem siginh rlimitinh };
+allow forgeos_t kernel_t:system { syslog_read };
+
+# Operit profile - isolated AI memory domain
+type operit_t;
+type operit_data_t;
+domain_type(operit_t)
+files_type(operit_data_t)
+allow operit_t operit_data_t:file { read write create open };
+allow forgeos_t operit_t:process { transition };
