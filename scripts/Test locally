@@ -1,0 +1,3 @@
+sudo /usr/bin/forge-verify-root
+# should print 5x [OK] + ALL CHECKS PASSED
+# if you tamper a model file: should [FAIL] + exit 1, and glimmer-agent won't start

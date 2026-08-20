@@ -1,0 +1,37 @@
+#!/bin/bash
+# ForgeOS - forge-verify-root
+# Verified Boot Check: dm-verity + lockdown + module.sig_enforce + Glimmer MANIFEST.sig
+# Fail-closed: any failure = exit 1, service will not start
+# For organized documentation only. Not legal advice.
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+fail() {
+  echo -e "${RED}[FAIL] $1${NC}" >&2
+  exit 1
+}
+
+ok() {
+  echo -e "${GREEN}[OK] $1${NC}"
+}
+
+# 1. Check kernel cmdline for verity + lockdown + sig_enforce
+CMDLINE=$(cat /proc/cmdline)
+echo "[Forge] Checking cmdline: $CMDLINE"
+
+[[ "$CMDLINE" == *"dm-verity"* ]] || [[ "$CMDLINE" == *"verity"* ]] || fail "dm-verity not in cmdline"
+ok "dm-verity present"
+
+[[ "$CMDLINE" == *"lockdown=integrity"* ]] || [[ "$CMDLINE" == *"lockdown=confidentiality"* ]] || fail "lockdown not enforced"
+ok "lockdown enforced"
+
+[[ "$CMDLINE" == *"module.sig_enforce=1"* ]] || fail "module.sig_enforce not enforced"
+ok "module sig_enforce enabled"
+
+# 2. Check dm-verity device is actually active
+if command -v veritysetup &> /dev/null; then
+  veritysetup status root

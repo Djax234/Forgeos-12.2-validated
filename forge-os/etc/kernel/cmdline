@@ -1,0 +1,1 @@
+roothash=PLACEHOLDER_WILL_GENERATE root=/dev/mapper/verity ro selinux=1 enforcing=1 lockdown=integrity module.sig_enforce=1 dm-verity.error_behavior=panic rd.verity=1
